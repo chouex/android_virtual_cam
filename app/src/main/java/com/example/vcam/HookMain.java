@@ -4,9 +4,7 @@ package com.example.vcam;
 import android.Manifest;
 import android.app.Application;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
@@ -93,15 +91,25 @@ public class HookMain implements IXposedHookLoadPackage {
 
     public static Class c2_state_callback;
     public Context toast_content;
+    private int cameraId;
 
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Exception {
+
+        XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", int.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                cameraId = (int) param.args[0];
+                XposedBridge.log("【VCAM】cameraId" + cameraId);
+            }
+        });
+
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "setPreviewTexture", SurfaceTexture.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
                 File file = new File(video_path + "virtual.mp4");
                 if (file.exists()) {
-                    File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                    if (control_file.exists()){
+                    boolean isDisabled = isDisabled();
+                    if (isDisabled) {
                         return;
                     }
                     if (is_hooked) {
@@ -156,8 +164,8 @@ public class HookMain implements IXposedHookLoadPackage {
                 }
                 c2_state_cb = (CameraDevice.StateCallback) param.args[1];
                 c2_state_callback = param.args[1].getClass();
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 File file = new File(video_path + "virtual.mp4");
@@ -191,8 +199,8 @@ public class HookMain implements IXposedHookLoadPackage {
                         return;
                     }
                     c2_state_cb = (CameraDevice.StateCallback) param.args[2];
-                    File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                    if (control_file.exists()) {
+                    boolean isDisabled = isDisabled();
+                    if (isDisabled) {
                         return;
                     }
                     File file = new File(video_path + "virtual.mp4");
@@ -372,8 +380,8 @@ public class HookMain implements IXposedHookLoadPackage {
                     }
                     return;
                 }
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 is_someone_playing = false;
@@ -477,8 +485,8 @@ public class HookMain implements IXposedHookLoadPackage {
                     }
                     return;
                 }
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 mcamera1 = (Camera) param.thisObject;
@@ -530,8 +538,8 @@ public class HookMain implements IXposedHookLoadPackage {
                 if (param.args[0].equals(c2_virtual_surface)) {
                     return;
                 }
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 String surfaceInfo = param.args[0].toString();
@@ -581,8 +589,8 @@ public class HookMain implements IXposedHookLoadPackage {
                     }
                     return;
                 }
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 Surface rm_surf = (Surface) param.args[0];
@@ -627,8 +635,8 @@ public class HookMain implements IXposedHookLoadPackage {
                     return;
                 }
 
-                File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                if (control_file.exists()) {
+                boolean isDisabled = isDisabled();
+                if (isDisabled) {
                     return;
                 }
                 XposedBridge.log("【VCAM】开始build请求");
@@ -686,6 +694,10 @@ public class HookMain implements IXposedHookLoadPackage {
 
                     }
                 });
+    }
+
+    private boolean isDisabled() {
+        return cameraId != 1 || new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg").exists();
     }
 
     private void process_camera2_play() {
@@ -1036,8 +1048,8 @@ public class HookMain implements IXposedHookLoadPackage {
                             XposedBridge.log("【VCAM】[toast]" + e.toString());
                         }
                     }
-                    File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                    if (control_file.exists()) {
+                    boolean isDisabled = isDisabled();
+                    if (isDisabled) {
                         return;
                     }
 
@@ -1077,8 +1089,8 @@ public class HookMain implements IXposedHookLoadPackage {
                             XposedBridge.log("【VCAM】[toast]" + ee.toString());
                         }
                     }
-                    File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-                    if (control_file.exists()) {
+                    boolean isDisabled = isDisabled();
+                    if (isDisabled) {
                         return;
                     }
                     input = getYUVByBitmap(getBMP(video_path + "1000.bmp"));
@@ -1093,8 +1105,8 @@ public class HookMain implements IXposedHookLoadPackage {
     private void process_callback(XC_MethodHook.MethodHookParam param) {
         Class preview_cb_class = param.args[0].getClass();
         int need_stop = 0;
-        File control_file = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera1/" + "disable.jpg");
-        if (control_file.exists()) {
+        boolean isDisabled = isDisabled();
+        if (isDisabled) {
             need_stop = 1;
         }
         File file = new File(video_path + "virtual.mp4");
@@ -1114,6 +1126,7 @@ public class HookMain implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod(preview_cb_class, "onPreviewFrame", byte[].class, android.hardware.Camera.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam paramd) throws Throwable {
+                if (isDisabled()) return;
                 Camera localcam = (android.hardware.Camera) paramd.args[1];
                 if (localcam.equals(camera_onPreviewFrame)) {
                     while (data_buffer == null) {
